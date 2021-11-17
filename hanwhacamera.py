@@ -21,6 +21,8 @@ def configure_camera(ip_address, orientation, out_dir='/tmp'):
 
     - Create waggle user if not exists
 
+    - Allow RTSP subscription without authentication
+
     - Create device_information.json
 
     - Back up the current configuration
@@ -74,7 +76,13 @@ def configure_camera(ip_address, orientation, out_dir='/tmp'):
                 return False
         else:
             logging.info(f'{ip_address}: User waggle already exists. Skipping. ')
-        
+
+        logging.info(f'{ip_address}: Allowing RTSP subscription without authentication')
+        ret = client.update_rtsp_authentication(protected=False)
+        if ret == False:
+            logging.error(f'{ip_address}: Failed to set RTSP subscription without authentication')
+            return False
+
         logging.info(f'{ip_address}: Creating device info under {out_dir}')
         ret, device_info = client.get_device_information()
         if ret == False:
