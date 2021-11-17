@@ -1,11 +1,9 @@
-#!/bin/bash
+#!/bin/bash +x
 
-while true;
-do
-  sleep 5
-done
-#python3 check-camera.py
-# git clone git@github.com:waggle-sensor/hanwha_camera_client.git
-# cd hanwha_camera_client
-# python3 setup.py install
-# cd /app
+cd /tmp
+git clone git@github.com:waggle-sensor/hanwha_camera_client.git
+cd hanwha_camera_client
+python3 setup.py install
+pip3 install dist/*.whl
+cd /app
+exit python3 -u camera_provisioner.py
