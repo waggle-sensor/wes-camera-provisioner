@@ -42,13 +42,14 @@ data:
 apiVersion: batch/v1beta1
 kind: CronJob
 metadata:
-  name: hardcoded-ses
+  name: wes-camera-provisioner
 spec:
   schedule: "0 * * * *"
   jobTemplate:
     spec:
       template:
         spec:
+          restartPolicy: Never
           serviceAccountName: wes-camera-provisioner-svc-account
           priorityClassName: wes-high-priority
           containers:
