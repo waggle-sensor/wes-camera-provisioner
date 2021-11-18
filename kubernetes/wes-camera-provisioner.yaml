@@ -44,7 +44,7 @@ kind: CronJob
 metadata:
   name: wes-camera-provisioner
 spec:
-  schedule: "0 * * * *"
+  schedule: "*/10 * * * *"
   jobTemplate:
     spec:
       template:

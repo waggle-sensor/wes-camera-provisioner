@@ -36,8 +36,13 @@ configured -- the camera is configured using node_manifest.json
 
 
 def get_current_datashim(api, name='waggle-data-config'):
+    # NOTE: Debug messages from Kubernetes client may contain sensitive information
+    #       and thus disable debugging flag
+    logger_level = logging.getLogger().level
+    logging.getLogger().setLevel(logging.INFO)
     """ Returns waggle datashim"""
     configmaps = api.list_namespaced_config_map('default')
+    logging.getLogger().setLevel(logger_level)
     for configmap in configmaps.items:
         if name in configmap.metadata.name:
             return json.loads(configmap.data['data-config.json'])
@@ -45,8 +50,13 @@ def get_current_datashim(api, name='waggle-data-config'):
 
 
 def set_datashim(api, datashim, name='waggle-data-config', namespace='default'):
+    # NOTE: Debug messages from Kubernetes client may contain sensitive information
+    #       and thus disable debugging flag
+    logger_level = logging.getLogger().level
+    logging.getLogger().setLevel(logging.INFO)
     patch={'data': {'data-config.json': json.dumps(datashim, indent=4)}}
     api.patch_namespaced_config_map(name, namespace, patch)
+    logging.getLogger().setLevel(logger_level)
 
 
 def update_manifest(manifest, cameras):
@@ -150,7 +160,7 @@ def run():
     logging.debug(f'manifest: {cameras}')
     cameras = update_manifest(cameras, cameras_from_switch)
     cameras = update_datashim(cameras)
-
+    return 0
 
 logging.basicConfig(
     level=logging.DEBUG,

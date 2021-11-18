@@ -153,6 +153,9 @@ def update_camera_status(cameras):
             camera_mac = device_info['ConnectedMACAddress'].lower()
             if camera.ip != camera_ip:
                 logging.warning(f'{camera_ip} does not match with {camera.ip}')
+                ret = client.update_device_information(camera.ip, camera_orientation)
+                if ret == False:
+                    logging.warning(f'{camera_ip}: Failed to correct DeviceDescription with {camera.ip}.')
             ret, stream = client.get_rtsp_stream_uri()
             if ret == False:
                 logging.error(f'{camera.ip}: Failed to get RTSP stream URI. Skipping...')
