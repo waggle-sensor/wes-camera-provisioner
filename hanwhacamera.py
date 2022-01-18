@@ -96,6 +96,14 @@ def configure_camera(ip_address, orientation, out_dir='/tmp'):
         if ret == False:
             logging.error(f'{ip_address}: Failed to save camera configuration')
 
+        logging.info(f'{ip_address}: Disabling auto focusing')
+        ret = client.set_iris_mode(False)
+        if ret == False:
+            logging.error(f'{ip_address}: Failed to disable auto focusing')
+        else:
+            logging.info(f'{ip_address}: Running Simple Focus to set the focus. It will take a few seconds')
+            client.simple_focus()
+            time.sleep(5)
         logging.info(f'{ip_address}: Taking a snapshot')
         ret = client.take_snapshot(os.path.join(out_dir, f'snapshot_{ip_address}.jpg'))
         if ret == False:
