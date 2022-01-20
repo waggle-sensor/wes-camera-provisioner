@@ -65,7 +65,7 @@ def get_cameras_from_switch(skip_pinging=False):
     for camera in table:
         ip = camera['address']
         # Accept only IPs betwen 10.31.81.10 - 10.31.81.20 for cameras
-        if not re.search('10.31.81.(1[0-9]|20)', ip):
+        if not re.search('10.31.81.(1[0-9]|20)$', ip):
             continue
         port = camera['port']['id']
         data = {
