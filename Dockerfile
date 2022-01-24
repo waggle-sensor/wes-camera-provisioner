@@ -5,6 +5,7 @@ RUN apt-get update \
   openssh-client \
   git \
   nmap \
+  arp-scan \
   && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt camera_provisioner.py hanwhacamera.py networkswitch.py utils.py run.sh /app/

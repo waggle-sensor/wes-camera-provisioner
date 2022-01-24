@@ -7,7 +7,7 @@ import logging
 import kubernetes
 
 from hanwhacamera import update_camera_status, get_camera_credential
-from networkswitch import get_cameras_from_switch, get_networkswitch_credential
+from networkswitch import get_ports_from_switch, get_cameras_from_nmap, get_networkswitch_credential
 from utils import load_node_manifest
 
 
@@ -150,12 +150,17 @@ def run():
         logging.error('Could not get camera credentials. Exiting...')
         return 1
 
-    logging.info('Scanning cameras using network switch...')
-    cameras_from_switch = get_cameras_from_switch()
-    logging.debug(f'Cameras found from networkswitch: {cameras_from_switch}')
+    logging.info("Scanning cameras using nmap...")
+    cameras_from_nmap = get_cameras_from_nmap()
+    cameras_from_nmap = get_ports_from_switch(cameras_from_nmap)
+    logging.debug(f'Cameras found from the network: {cameras_from_nmap}')
+
+    # logging.info('Scanning cameras using network switch...')
+    # cameras_from_switch = get_cameras_from_switch()
+    # logging.debug(f'Cameras found from networkswitch: {cameras_from_switch}')
 
     logging.info('Updating recognized cameras...')
-    cameras_from_switch = update_camera_status(cameras_from_switch)
+    cameras_from_switch = update_camera_status(cameras_from_nmap)
     logging.debug(f'Updated state of cameras: {cameras_from_switch}')
     logging.debug(f'manifest: {cameras}')
     cameras = update_manifest(cameras, cameras_from_switch)
