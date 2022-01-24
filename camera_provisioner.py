@@ -3,6 +3,7 @@
 import os
 import json
 import logging
+import time
 
 import kubernetes
 
@@ -152,6 +153,8 @@ def run():
 
     logging.info("Scanning cameras using nmap...")
     cameras_from_nmap = get_cameras_from_nmap()
+    logging.info("Sleep 3 seconds for the switch to update its network table")
+    time.sleep(3)
     cameras_from_nmap = get_ports_from_switch(cameras_from_nmap)
     logging.debug(f'Cameras found from the network: {cameras_from_nmap}')
 

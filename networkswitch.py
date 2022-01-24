@@ -6,6 +6,17 @@ import re
 from utils import create_dataframe, create_row
 from unifi_switch_client import UnifiSwitchClient
 
+
+# Unifi switch port mapping into camera orientations
+# --------
+# port 1: R = Right camera or S = Shield
+# port 2: T = top
+# port 3: n/a
+# port 4: N = node controller (NX core)
+# port 5: E = Edge processor (NX agent)
+# port 6: n/a
+# port 7: B = Bottom
+# port 8: L = Left
 mapping = {
     '0/1': 'right',
     '0/2': 'top',
@@ -26,17 +37,6 @@ def get_cameras_from_switch(skip_pinging=False):
     """ Returns updated list of cameras from Unifi edgeswitch 8
     
     Because cameras may go into sleep the function pings them one by one, which takes time, before getting the camera table
-
-    Unifi switch port mapping into camera orientations
-    --------
-    port 1: R = Right camera or S = Shield
-    port 2: T = top
-    port 3: n/a
-    port 4: N = node controller (NX core)
-    port 5: E = Edge processor (NX agent)
-    port 6: n/a
-    port 7: B = Bottom
-    port 8: L = Left
 
     Keyword Arguments:
     --------
@@ -117,7 +117,7 @@ def get_cameras_from_nmap():
     MAC Address: E4:30:22:23:9E:8E (Hanwha Techwin Security Vietnam)
     Nmap done: 11 IP addresses (3 hosts up) scanned in 0.50 seconds
     ```
-    
+
     Returns:
     --------
     `cameras` -- a pandas.Dataframe with cameras recognized from nmap
