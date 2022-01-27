@@ -141,13 +141,13 @@ def update_datashim(cameras):
             continue
         logging.info(f'Updating datashim for {camera.orientation}...')
         datashim = update_datashim_for_camera(datashim, camera)
-    set_datashim(api, datashim, name="waggle-data-config")
+    set_datashim(api, datashim, "waggle-data-config")
     namespaces_to_apply = ["ses", "dev"]
     existing_namespaces = api.list_namespace()
     for namespace in existing_namespaces.items:
         if namespace.metadata.name in namespaces_to_apply:
             logging.info(f'applygin datashim to {namespace.metadata.name}...')
-            set_datashim(api, datashim, name="wes-data-config", namespace=namespace)
+            set_datashim(api, datashim, "waggle-data-config", namespace=namespace.metadata.name)
     logging.getLogger().setLevel(logger_level)
     return cameras
 
