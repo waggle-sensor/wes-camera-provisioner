@@ -128,9 +128,9 @@ def update_datashim(cameras):
     logging.getLogger().setLevel(logging.INFO)
     kubernetes.config.load_incluster_config()
     api = kubernetes.client.CoreV1Api()
-    configmap = get_configmap(api, "wes-data-config")
+    configmap = get_configmap(api, "waggle-data-config")
     if configmap == None:
-        logging.warning("Not found wes-data-config in default namespace")
+        logging.warning("Not found waggle-data-config in default namespace")
         datashim = []
     else:
         datashim = json.loads(configmap.data['data-config.json'])
@@ -141,7 +141,7 @@ def update_datashim(cameras):
             continue
         logging.info(f'Updating datashim for {camera.orientation}...')
         datashim = update_datashim_for_camera(datashim, camera)
-    set_datashim(api, datashim, name="wes-data-config")
+    set_datashim(api, datashim, name="waggle-data-config")
     namespaces_to_apply = ["ses", "dev"]
     existing_namespaces = api.list_namespace()
     for namespace in existing_namespaces.items:
