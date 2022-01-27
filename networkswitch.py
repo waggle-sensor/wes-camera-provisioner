@@ -125,7 +125,6 @@ def get_cameras_from_nmap():
     cameras = create_dataframe()
     output = subprocess.check_output(('nmap', '-sP', '10.31.81.10-20'))
     output_newlined = output.decode().strip().split('\n')
-    ret = []
     found_ip = None
     for line in output_newlined:
         found = re.search('10.31.81.[0-9]{2}', line)

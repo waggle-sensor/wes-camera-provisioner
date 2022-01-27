@@ -36,28 +36,26 @@ configured -- the camera is configured using node_manifest.json
 """)
 
 
-def get_current_datashim(api, name='waggle-data-config'):
-    # NOTE: Debug messages from Kubernetes client may contain sensitive information
-    #       and thus disable debugging flag
-    logger_level = logging.getLogger().level
-    logging.getLogger().setLevel(logging.INFO)
-    """ Returns waggle datashim"""
-    configmaps = api.list_namespaced_config_map('default')
-    logging.getLogger().setLevel(logger_level)
+def get_configmap(api, name, namespace="default"):
+    configmaps = api.list_namespaced_config_map(namespace)
     for configmap in configmaps.items:
         if name in configmap.metadata.name:
-            return json.loads(configmap.data['data-config.json'])
-    return []
+            return configmap
+    return None
 
 
-def set_datashim(api, datashim, name='waggle-data-config', namespace='default'):
-    # NOTE: Debug messages from Kubernetes client may contain sensitive information
-    #       and thus disable debugging flag
-    logger_level = logging.getLogger().level
-    logging.getLogger().setLevel(logging.INFO)
-    patch={'data': {'data-config.json': json.dumps(datashim, indent=4)}}
-    api.patch_namespaced_config_map(name, namespace, patch)
-    logging.getLogger().setLevel(logger_level)
+def set_datashim(api, datashim, name, namespace='default'):
+    configmap = get_configmap(api, name, namespace)
+    if configmap == None:
+        configmap = kubernetes.client.V1ConfigMap()
+        configmap.metadata = kubernetes.client.V1ObjectMeta(name=name)
+        configmap.data = {
+            "data-config.json": json.dumps(datashim, indent=4)
+        }
+        api.create_namespaced_config_map(namespace, configmap)
+    else:
+        patch={'data': {'data-config.json': json.dumps(datashim, indent=4)}}
+        api.patch_namespaced_config_map(name, namespace, patch)
 
 
 def update_manifest(manifest, cameras):
@@ -115,22 +113,42 @@ def drop_camera_from_datashim(datashim, camera):
 
 
 def update_datashim(cameras):
-    """ 
+    """ Updates the datashim Kubernetes Configmap based on camera status
+
+    This updates the datashim on "ses" namespace as well to affect plugins running in
+    the namespace.
+
     Keyword Arguments:
     --------
     `cameras` -- a pandas Dataframe with cameras configured/notconfigured
     """
+    # NOTE: Debug messages from Kubernetes client may contain sensitive information
+    #       and thus disable debugging flag
+    logger_level = logging.getLogger().level
+    logging.getLogger().setLevel(logging.INFO)
     kubernetes.config.load_incluster_config()
     api = kubernetes.client.CoreV1Api()
-    datashim = get_current_datashim(api)
-    for orientation, camera in cameras.iterrows():
+    configmap = get_configmap(api, "wes-data-config")
+    if configmap == None:
+        logging.warning("Not found wes-data-config in default namespace")
+        datashim = []
+    else:
+        datashim = json.loads(configmap.data['data-config.json'])
+    for _, camera in cameras.iterrows():
         if camera.state != 'registered':
             logging.info(f'Dropping datashim for {camera.orientation}...')
             datashim = drop_camera_from_datashim(datashim, camera)
             continue
         logging.info(f'Updating datashim for {camera.orientation}...')
         datashim = update_datashim_for_camera(datashim, camera)
-    set_datashim(api, datashim)
+    set_datashim(api, datashim, name="wes-data-config")
+    namespaces_to_apply = ["ses", "dev"]
+    existing_namespaces = api.list_namespace()
+    for namespace in existing_namespaces.items:
+        if namespace.metadata.name in namespaces_to_apply:
+            logging.info(f'applygin datashim to {namespace.metadata.name}...')
+            set_datashim(api, datashim, name="wes-data-config", namespace=namespace)
+    logging.getLogger().setLevel(logger_level)
     return cameras
 
 
