@@ -129,7 +129,7 @@ def initialize_camera(camera):
     logging.info(f'Waiting for 5 seconds to see {camera.ip} come back')
     time.sleep(5)
     logging.info(f'{camera.ip} is being configured...')
-    return configure_camera(ip_address=camera.ip, orientation=camera.name)
+    return configure_camera(ip_address=camera.ip, orientation=camera.orientation)
 
 
 def update_camera_status(cameras):
