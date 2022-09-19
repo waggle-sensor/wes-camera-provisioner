@@ -60,7 +60,8 @@ def set_datashim(api, datashim, name, namespace='default'):
 
 def update_manifest(manifest, cameras):
     for orientation, camera in manifest.iterrows():
-        camera_found = cameras.loc[cameras.orientation == orientation]
+        # get the camera that matches with the orientation and is configured
+        camera_found = cameras.loc[(cameras.orientation == orientation) & cameras.state.str.contains("configured")]
         if len(camera_found) < 1:
             logging.error(f'No camera is found for {orientation}. Corresponding datashim will be removed')
             camera.orientation = orientation
