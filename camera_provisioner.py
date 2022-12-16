@@ -154,7 +154,7 @@ def update_datashim(cameras):
     existing_namespaces = api.list_namespace()
     for namespace in existing_namespaces.items:
         if namespace.metadata.name in namespaces_to_apply:
-            logging.info(f"applygin datashim to {namespace.metadata.name}...")
+            logging.info(f"applying datashim to {namespace.metadata.name}...")
             set_datashim(api, datashim, "waggle-data-config", namespace=namespace.metadata.name)
     logging.getLogger().setLevel(logger_level)
     return cameras
