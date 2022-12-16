@@ -19,7 +19,7 @@ from utils import load_node_manifest
 def print_logic():
     print(
         """
-A. get list of cameras from node_manifest.json
+A. get list of cameras from node-manifest-v2.json
 
 B. get list of cameras currently recognized from Unifi switch
 
@@ -37,7 +37,7 @@ error -- there is an error on the camera. Check the note column to get more info
 
 factory -- the camera is in factory default state
 
-configured -- the camera is configured using node_manifest.json
+configured -- the camera is configured using node-manifest-v2.json
 """
     )
 
@@ -162,12 +162,12 @@ def update_datashim(cameras):
 
 def run():
     waggle_path = "/etc/waggle"
-    node_manifest_path = os.path.join(waggle_path, "node_manifest.json")
+    node_manifest_path = os.path.join(waggle_path, "node-manifest-v2.json")
     if not os.path.exists(node_manifest_path):
         logging.error(f"No {node_manifest_path} found. Exiting...")
         return 1
     cameras = load_node_manifest(node_manifest_path)
-    logging.debug(f"Cameras found from node_manifest: {cameras}")
+    logging.debug(f"Cameras found from node-manifest-v2: {cameras}")
 
     if not all(get_networkswitch_credential()):
         logging.error("Could not get network switch credential. Exiting...")
