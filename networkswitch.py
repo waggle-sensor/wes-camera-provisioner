@@ -1,11 +1,11 @@
-import os
-import subprocess
 import logging
+import os
 import re
+import subprocess
 
-from utils import create_dataframe, create_row
 from unifi_switch_client import UnifiSwitchClient
 
+from utils import create_dataframe, create_row
 
 # Unifi switch port mapping into camera orientations
 # --------
@@ -18,24 +18,28 @@ from unifi_switch_client import UnifiSwitchClient
 # port 7: B = Bottom
 # port 8: L = Left
 mapping = {
-    '0/1': 'right',
-    '0/2': 'top',
-    '0/3': 'port3',
-    '0/4': 'nxcore',
-    '0/5': 'nxagent',
-    '0/6': 'port6',
-    '0/7': 'bottom',
-    '0/8': 'left',
+    "0/1": "right",
+    "0/2": "top",
+    "0/3": "port3",
+    "0/4": "nxcore",
+    "0/5": "nxagent",
+    "0/6": "port6",
+    "0/7": "bottom",
+    "0/8": "left",
 }
 
 
 def get_networkswitch_credential():
-    return os.getenv('WAGGLE_SWITCH_ADDRESS', '10.31.81.2'), os.getenv('WAGGLE_SWITCH_USER'), os.getenv('WAGGLE_SWITCH_PASSWORD')
+    return (
+        os.getenv("WAGGLE_SWITCH_ADDRESS", "10.31.81.2"),
+        os.getenv("WAGGLE_SWITCH_USER"),
+        os.getenv("WAGGLE_SWITCH_PASSWORD"),
+    )
 
 
 def get_cameras_from_switch(skip_pinging=False):
-    """ Returns updated list of cameras from Unifi edgeswitch 8
-    
+    """Returns updated list of cameras from Unifi edgeswitch 8
+
     Because cameras may go into sleep the function pings them one by one, which takes time, before getting the camera table
 
     Keyword Arguments:
@@ -54,26 +58,23 @@ def get_cameras_from_switch(skip_pinging=False):
     """
     address, username, password = get_networkswitch_credential()
     cameras = create_dataframe()
-    with UnifiSwitchClient(host=f'https://{address}', username=username, password=password) as client:
+    with UnifiSwitchClient(
+        host=f"https://{address}", username=username, password=password
+    ) as client:
         if skip_pinging == False:
             for i in range(10, 20):
-                _, _ = client.ping(f'10.31.81.{i}', trial=1)
+                _, _ = client.ping(f"10.31.81.{i}", trial=1)
         ret, table = client.get_mac_table()
         if ret is False:
-            logging.error('Failed to retreive cameras from the switch')
+            logging.error("Failed to retreive cameras from the switch")
             return cameras
     for camera in table:
-        ip = camera['address']
+        ip = camera["address"]
         # Accept only IPs betwen 10.31.81.10 - 10.31.81.20 for cameras
-        if not re.search('10.31.81.(1[0-9]|20)$', ip):
+        if not re.search("10.31.81.(1[0-9]|20)$", ip):
             continue
-        port = camera['port']['id']
-        data = {
-            'ip': ip,
-            'mac': camera['mac'].lower(),
-            'orientation': mapping[port],
-            'port': port
-        }
+        port = camera["port"]["id"]
+        data = {"ip": ip, "mac": camera["mac"].lower(), "orientation": mapping[port], "port": port}
         orientation = mapping[port]
 
         cameras = cameras.append(create_row(data, name=orientation))
@@ -82,19 +83,22 @@ def get_cameras_from_switch(skip_pinging=False):
 
 def get_ports_from_switch(cameras):
     address, username, password = get_networkswitch_credential()
-    with UnifiSwitchClient(host=f'https://{address}', username=username, password=password) as client:
+    with UnifiSwitchClient(
+        host=f"https://{address}", username=username, password=password
+    ) as client:
         ret, table = client.get_mac_table()
         if ret == False:
             logging.error("Failed to get mac table from network switch")
             return cameras
     for row in table:
-        mac = row['mac']
-        port = row['port']['id']
-        cameras.loc[cameras.mac == mac, 'orientation'] = mapping[port]
+        mac = row["mac"]
+        port = row["port"]["id"]
+        cameras.loc[cameras.mac == mac, "orientation"] = mapping[port]
     return cameras
 
+
 def get_cameras_from_nmap():
-    """ Returns a list of cameras from nmap over 10.31.81.10-20
+    """Returns a list of cameras from nmap over 10.31.81.10-20
 
     Execution of nmap returns MAC address of recognized devices when the network privilege
     is granted. Please make sure the privilege is given when calling.
@@ -123,28 +127,22 @@ def get_cameras_from_nmap():
     `cameras` -- a pandas.Dataframe with cameras recognized from nmap
     """
     cameras = create_dataframe()
-    output = subprocess.check_output(('nmap', '-sP', '10.31.81.10-20'))
-    output_newlined = output.decode().strip().split('\n')
+    output = subprocess.check_output(("nmap", "-sP", "10.31.81.10-20"))
+    output_newlined = output.decode().strip().split("\n")
     found_ip = None
     for line in output_newlined:
-        found = re.search('10.31.81.[0-9]{2}', line)
+        found = re.search("10.31.81.[0-9]{2}", line)
         if found:
             if found_ip is not None:
-                data = {
-                    'ip': found_ip['ip'],
-                    'mac': found_ip['mac'].lower()
-                }
-                cameras = cameras.append(create_row(data, name='unknown'))
-            found_ip = {'ip': found.string[found.start():found.end()]}
+                data = {"ip": found_ip["ip"], "mac": found_ip["mac"].lower()}
+                cameras = cameras.append(create_row(data, name="unknown"))
+            found_ip = {"ip": found.string[found.start() : found.end()]}
             continue
-        found = re.search('(?:[0-9a-zA-Z]:?){12}', line)
+        found = re.search("(?:[0-9a-zA-Z]:?){12}", line)
         if found:
             if found_ip is not None:
-                found_ip.update({'mac': found.string[found.start():found.end()]})
+                found_ip.update({"mac": found.string[found.start() : found.end()]})
     if found_ip is not None:
-        data = {
-            'ip': found_ip['ip'],
-            'mac': found_ip['mac'].lower()
-        }
-        cameras = cameras.append(create_row(data, name='unknown'))
+        data = {"ip": found_ip["ip"], "mac": found_ip["mac"].lower()}
+        cameras = cameras.append(create_row(data, name="unknown"))
     return cameras

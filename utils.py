@@ -1,9 +1,10 @@
 import json
+
 import pandas
 
 
 def create_dataframe():
-    """ Returns a dataframe representing the camera configuration table
+    """Returns a dataframe representing the camera configuration table
 
     Columns:
     --------
@@ -27,7 +28,9 @@ def create_dataframe():
     --------
     `cameras` -- a pandas.DataFrame containing empty data with the columns
     """
-    return pandas.DataFrame([], columns=['ip', 'mac', 'orientation', 'port', 'model', 'stream', 'state', 'note'])
+    return pandas.DataFrame(
+        [], columns=["ip", "mac", "orientation", "port", "model", "stream", "state", "note"]
+    )
 
 
 def create_row(data, name=None):
@@ -35,7 +38,7 @@ def create_row(data, name=None):
 
 
 def load_node_manifest(node_manifest_path):
-    """ Creates a list of camera objects based on node_manifest.json
+    """Creates a list of camera objects based on node_manifest.json
 
     Keyword Arguments:
     --------
@@ -46,12 +49,12 @@ def load_node_manifest(node_manifest_path):
     `cameras` -- a pandas.DataFrame containing cameras recognized from node_manifest.json
     """
     cameras = create_dataframe()
-    with open(node_manifest_path, 'r') as file:
+    with open(node_manifest_path, "r") as file:
         manifest = json.load(file)
-    for camera in manifest['cameras']:
-        if camera['present'] == True:
-            data = { 'state': 'unknown' }
-            if 'model' in camera and camera['model'] != "":
-                data.update({'model': camera['model']})
-            cameras = cameras.append(create_row(data, name=camera['orientation']))
+    for camera in manifest["cameras"]:
+        if camera["present"] == True:
+            data = {"state": "unknown"}
+            if "model" in camera and camera["model"] != "":
+                data.update({"model": camera["model"]})
+            cameras = cameras.append(create_row(data, name=camera["orientation"]))
     return cameras
