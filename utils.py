@@ -2,6 +2,8 @@ import json
 
 import pandas
 
+CAMERA_MODELS = ["XNV-8082R", "XNV-8080R", "XNP-6400RW", "XNF-8010RV", "XNV-8081Z"]
+
 
 def create_dataframe():
     """Returns a dataframe representing the camera configuration table
@@ -52,7 +54,7 @@ def load_node_manifest(node_manifest_path):
     with open(node_manifest_path, "r") as file:
         manifest = json.load(file)
     # this assumes all cameras in the manifest have the string "camera" in the "name"
-    m_cameras = [s for s in manifest["sensors"] if "camera" in s["name"]]
+    m_cameras = [s for s in manifest["sensors"] if s["hardware"]["hw_model"] in CAMERA_MODELS]
     for m_cam in m_cameras:
         data = {"state": "unknown", "model": m_cam["hardware"]["hw_model"]}
         # this assumes the "name" of the camera is "<orientation>_camera" (ex. "top_camera")
