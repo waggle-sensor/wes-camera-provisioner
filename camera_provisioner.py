@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-
+import os
 import json
 import logging
 import os
 import time
+import re
 
 import kubernetes
 
@@ -15,6 +16,25 @@ from networkswitch import (
 )
 from utils import load_node_manifest
 
+WAGGLE_MANIFEST_V2_PATH = os.getenv("WAGGLE_MANIFEST_V2_PATH", "")
+
+TARGET_CAMERA_REGEX = [
+    {
+        "description": "hanwha cameras",
+        "manufacturer": "hanwha",
+        "hw_model": ["XNV-8082R", "XNV-8080R", "XNP-6400RW", "XNF-8010RV", "XNV-8081Z"],
+    },
+    {
+        "description": "mobotix cameras",
+        "manufacturer": "mobitix",
+        "hw_model": ["*"],
+    },
+    {
+        "description": "NEON stardot cameras",
+        "manufacturer": "NetCam CS",
+        "hw_model": ["*"],
+    }
+]
 
 def print_logic():
     print(
@@ -23,7 +43,7 @@ A. get list of cameras from node-manifest-v2.json
 
 B. get list of cameras currently recognized from Unifi switch
 
-C. check each camera in B. if the camera needs a provisioning
+C. check each of recognized cameras in B., if the camera needs a provisioning
 
 D. provision cameras that need it
 
@@ -40,6 +60,29 @@ factory -- the camera is in factory default state
 configured -- the camera is configured using node-manifest-v2.json
 """
     )
+
+
+def get_cameras_from_manifest(manifest, camera_regex):
+    logging.info(f'finding cameras from given manifest')
+    if "sensors" not in manifest or len(manifest["sensors"]) == 0:
+        return []
+    # get nodes' global sensors that include camera
+    for manifest_camera in manifest["sensors"]:
+
+    for camera in camera_regex:
+        if "description" in camera:
+            logging.info(f'finding any match for {camera["description"]}')
+        else:
+            logging.info(f'finding any match')
+        if "manufacturer" in camera:
+        # this assumes all cameras in the manifest have the string "camera" in the "name"
+    m_cameras = [s for s in manifest["sensors"] if s["hardware"]["hw_model"] in CAMERA_MODELS]
+    for m_cam in m_cameras:
+        data = {"state": "unknown", "model": m_cam["hardware"]["hw_model"]}
+        # this assumes the "name" of the camera is "<orientation>_camera" (ex. "top_camera")
+        orientation = m_cam["name"].split("_")[0]
+        cameras = cameras.append(create_row(data, name=orientation))
+    return cameras
 
 
 def get_configmap(api, name, namespace="default"):
@@ -161,13 +204,17 @@ def update_datashim(cameras):
 
 
 def run():
-    waggle_path = "/etc/waggle"
-    node_manifest_path = os.path.join(waggle_path, "node-manifest-v2.json")
-    if not os.path.exists(node_manifest_path):
-        logging.error(f"No {node_manifest_path} found. Exiting...")
+    logging.info(f'Get node manifest from {WAGGLE_MANIFEST_V2_PATH}')
+    if not os.path.exists(WAGGLE_MANIFEST_V2_PATH):
+        logging.error(f"No {WAGGLE_MANIFEST_V2_PATH} found. Exiting.")
         return 1
-    cameras = load_node_manifest(node_manifest_path)
-    logging.debug(f"Cameras found from node-manifest-v2: {cameras}")
+    manifest = load_node_manifest(WAGGLE_MANIFEST_V2_PATH)
+    cameras = get_cameras_from_manifest(manifest, TARGET_CAMERA_REGEX)
+    if len(cameras) < 1:
+        logging.info(f'no sensors found in the manifest: {manifest}. no action to take.')
+        return 0
+    else:
+        logging.info(f"{len(cameras)} found from manifest")
 
     if not all(get_networkswitch_credential()):
         logging.error("Could not get network switch credential. Exiting...")

@@ -2,7 +2,7 @@ import json
 
 import pandas
 
-CAMERA_MODELS = ["XNV-8082R", "XNV-8080R", "XNP-6400RW", "XNF-8010RV", "XNV-8081Z"]
+
 
 
 def create_dataframe():
@@ -39,7 +39,7 @@ def create_row(data, name=None):
     return pandas.Series(data, name=name)
 
 
-def load_node_manifest(node_manifest_path):
+def get_cameras_from_manifest(node_manifest_path, target_cameras):
     """Creates a list of camera objects based on node-manifest-v2.json
 
     Keyword Arguments:
@@ -61,3 +61,6 @@ def load_node_manifest(node_manifest_path):
         orientation = m_cam["name"].split("_")[0]
         cameras = cameras.append(create_row(data, name=orientation))
     return cameras
+
+
+def get_camera(node_ma)
