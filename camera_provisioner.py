@@ -14,11 +14,11 @@ from networkswitch import (
     get_networkswitch_credential,
     get_ports_from_switch,
 )
-from utils import load_node_manifest
+import utils
 
 WAGGLE_MANIFEST_V2_PATH = os.getenv("WAGGLE_MANIFEST_V2_PATH", "")
 
-TARGET_CAMERA_REGEX = [
+TARGET_CAMERA_REGEX = os.getenv("TARGET_CAMERA_REGEX", [
     {
         "description": "hanwha cameras",
         "manufacturer": "hanwha",
@@ -31,10 +31,10 @@ TARGET_CAMERA_REGEX = [
     },
     {
         "description": "NEON stardot cameras",
-        "manufacturer": "NetCam CS",
-        "hw_model": ["*"],
+        "manufacturer": "stardot",
+        "hw_model": ["NetCam CS"],
     }
-]
+])
 
 def print_logic():
     print(
@@ -62,27 +62,35 @@ configured -- the camera is configured using node-manifest-v2.json
     )
 
 
-def get_cameras_from_manifest(manifest, camera_regex):
+def get_cameras_from_manifest(manifest_path, camera_matchers:list[utils.CameraObject]) ->list[utils.CameraObject]:
+    logging.info(f'loading manifest from {manifest_path}')
+    manifest = utils.load_node_manifest(manifest_path)
     logging.info(f'finding cameras from given manifest')
     if "sensors" not in manifest or len(manifest["sensors"]) == 0:
+        logging.info("no sensors found from manifest")
         return []
+    found_cameras = []
     # get nodes' global sensors that include camera
-    for manifest_camera in manifest["sensors"]:
-
-    for camera in camera_regex:
-        if "description" in camera:
-            logging.info(f'finding any match for {camera["description"]}')
-        else:
-            logging.info(f'finding any match')
-        if "manufacturer" in camera:
-        # this assumes all cameras in the manifest have the string "camera" in the "name"
-    m_cameras = [s for s in manifest["sensors"] if s["hardware"]["hw_model"] in CAMERA_MODELS]
-    for m_cam in m_cameras:
-        data = {"state": "unknown", "model": m_cam["hardware"]["hw_model"]}
-        # this assumes the "name" of the camera is "<orientation>_camera" (ex. "top_camera")
-        orientation = m_cam["name"].split("_")[0]
-        cameras = cameras.append(create_row(data, name=orientation))
-    return cameras
+    for m_sensor in manifest["sensors"]:
+        sensor_name = m_sensor.get("name", "")
+        if sensor_name == "":
+            logging.warn('found a sensor with no name. skipping.')
+            continue
+        logging.info(f'found {sensor_name} from manifest')
+        manifest_hardware = m_sensor.get("hardware", None)
+        if manifest_hardware is None:
+            logging.warn(f'no hardware information found from {sensor_name}. skipping.')
+            continue
+        # get manufacturer and hardware model of camera from the manifest
+        manifest_manufacturer = manifest_hardware.get("manufacturer", "")
+        manifest_hw_model = manifest_hardware.get("hw_model", "")
+        for camera_matcher in camera_matchers:
+            if camera_matcher.match(manifest_manufacturer, manifest_hw_model):
+                logging.info(f'found a match {sensor_name}')
+                c = utils.CameraObject(manifest_manufacturer, manifest_hw_model)
+                c.set_state("unknown")
+                found_cameras.append(c)
+    return found_cameras
 
 
 def get_configmap(api, name, namespace="default"):
@@ -208,18 +216,20 @@ def run():
     if not os.path.exists(WAGGLE_MANIFEST_V2_PATH):
         logging.error(f"No {WAGGLE_MANIFEST_V2_PATH} found. Exiting.")
         return 1
-    manifest = load_node_manifest(WAGGLE_MANIFEST_V2_PATH)
-    cameras = get_cameras_from_manifest(manifest, TARGET_CAMERA_REGEX)
+    camera_matchers = utils.create_camera_object_matchers(TARGET_CAMERA_REGEX)
+    cameras = get_cameras_from_manifest(WAGGLE_MANIFEST_V2_PATH, camera_matchers)
     if len(cameras) < 1:
-        logging.info(f'no sensors found in the manifest: {manifest}. no action to take.')
+        logging.info(f'no matching camera found. no further action will be taken.')
         return 0
     else:
         logging.info(f"{len(cameras)} found from manifest")
 
+    logging.info('fetching network switch credential.')
     if not all(get_networkswitch_credential()):
         logging.error("Could not get network switch credential. Exiting...")
         return 1
 
+    logging.info('fetching camera user credential.')
     if not all(get_camera_credential()):
         logging.error("Could not get camera credentials. Exiting...")
         return 1
