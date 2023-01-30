@@ -53,12 +53,13 @@ def load_node_manifest(node_manifest_path):
 
 
 class CameraObject(object):
-    def __init__(self, manufacturer, hw_model):
+    def __init__(self, name, manufacturer, hw_model):
+        self.name = name
         self.manufacturer = manufacturer
         self.hw_model = hw_model
         self.state = ""
         self.macaddress = ""
-        self.serial = ""
+        self.serial_no = ""
         self.url = ""
 
     def set_state(self, new_state):
@@ -75,7 +76,7 @@ class CameraObjectMatcher(object):
     def match_manufacturer(self, manufacturer:str) ->bool:
         if self.manufacturer == "" or self.manufacturer == "*":
             return True
-        match = re.search(self.manufacturer, manufacturer)
+        match = re.search(self.manufacturer, manufacturer, flags=re.IGNORECASE)
         if match is not None:
             return True
         else:
@@ -87,11 +88,11 @@ class CameraObjectMatcher(object):
         if "*" in self.hw_model:
             return True
         expr = "(" + ")|(".join(self.hw_model) + ")"
-        matches = re.search(expr, hw_model)
+        matches = re.search(expr, hw_model, flags=re.IGNORECASE)
         if matches is not None:
             return True
         return False
-    
+
     # returns True/False based on if given manufacturer and hw_model match
     # with this camera object
     def match(self, manufacturer:str, hw_model:str) ->bool:
@@ -107,5 +108,5 @@ def create_camera_object_matchers(camera_matchers:dict):
         d = camera_matcher.get("description", "")
         m = camera_matcher.get("manufacturer", "")
         hw = camera_matcher.get("hw_model", "")
-        objects.append(CameraObject(d, m, hw))
+        objects.append(CameraObjectMatcher(d, m, hw))
     return objects

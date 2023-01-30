@@ -8,7 +8,7 @@ import re
 
 import kubernetes
 
-from hanwhacamera import get_camera_credential, update_camera_status
+from hanwhacamera import get_camera_credential, update_hanwha_camera
 from networkswitch import (
     get_cameras_from_nmap,
     get_networkswitch_credential,
@@ -62,7 +62,7 @@ configured -- the camera is configured using node-manifest-v2.json
     )
 
 
-def get_cameras_from_manifest(manifest_path, camera_matchers:list[utils.CameraObject]) ->list[utils.CameraObject]:
+def get_cameras_from_manifest(manifest_path, camera_matchers:list) -> list:
     logging.info(f'loading manifest from {manifest_path}')
     manifest = utils.load_node_manifest(manifest_path)
     logging.info(f'finding cameras from given manifest')
@@ -87,7 +87,7 @@ def get_cameras_from_manifest(manifest_path, camera_matchers:list[utils.CameraOb
         for camera_matcher in camera_matchers:
             if camera_matcher.match(manifest_manufacturer, manifest_hw_model):
                 logging.info(f'found a match {sensor_name}')
-                c = utils.CameraObject(manifest_manufacturer, manifest_hw_model)
+                c = utils.CameraObject(sensor_name, manifest_manufacturer, manifest_hw_model)
                 c.set_state("unknown")
                 found_cameras.append(c)
     return found_cameras
@@ -113,49 +113,37 @@ def set_datashim(api, datashim, name, namespace="default"):
         api.patch_namespaced_config_map(name, namespace, patch)
 
 
-def update_manifest(manifest, cameras):
-    for orientation, camera in manifest.iterrows():
+def temp_update_manifest_cameras(manifest_cameras, node_cameras):
+    for _, camera in node_cameras.iterrows():
         # get the camera that matches with the orientation and is configured
-        camera_found = cameras.loc[
-            (cameras.orientation == orientation) & cameras.state.str.contains("configured")
-        ]
-        if len(camera_found) < 1:
-            logging.error(
-                f"No camera is found for {orientation}. Corresponding datashim will be removed"
-            )
-            camera.orientation = orientation
-            continue
-        the_camera = camera_found.iloc[0]
-        if the_camera.model.lower() != camera.model.lower():
-            logging.error(
-                f"{the_camera.model} is wrong for {orientation}. It should have been {camera.model}. datashim will be removed"
-            )
-            continue
-        logging.info(f"the camera for {orientation} found. datashim will be updated")
-        the_camera = the_camera.rename(orientation)
-        the_camera.state = "registered"
-        manifest.loc[orientation].update(the_camera)
-    return manifest
+        orientation = camera["orientation"]
+        for m_camera in manifest_cameras:
+            if orientation in m_camera.name:
+                logging.info(f"the camera for {orientation} found. datashim will be updated")
+                m_camera.set_state("registered")
+                m_camera.url = camera["stream"]
+                m_camera.serial_no = camera["mac"]
+    return manifest_cameras
 
 
 def update_datashim_for_camera(datashim, camera):
     for entry in datashim:
         try:
-            if entry["match"]["id"] == camera.orientation:
-                entry["handler"]["args"]["url"] = camera.stream
+            if entry["match"]["id"] == camera.name:
+                entry["handler"]["args"]["url"] = camera.url
                 return datashim
         except KeyError:
             pass
     datashim.append(
         {
-            "handler": {"args": {"url": camera.stream}, "type": "video"},
+            "handler": {"args": {"url": camera.url}, "type": "video"},
             "match": {
-                "id": camera.orientation,
-                "orientation": camera.orientation,
+                "id": camera.name,
+                "orientation": camera.name,
                 "resolution": "800x600",
                 "type": "camera/video",
             },
-            "name": camera.ip,
+            "name": camera.name,
         }
     )
     return datashim
@@ -164,14 +152,14 @@ def update_datashim_for_camera(datashim, camera):
 def drop_camera_from_datashim(datashim, camera):
     for entry in datashim:
         try:
-            if entry["match"]["id"] == camera.orientation:
+            if entry["match"]["id"] == camera.name:
                 datashim.remove(entry)
         except KeyError:
             continue
     return datashim
 
 
-def update_datashim(cameras):
+def update_datashim(manifest_cameras:list):
     """Updates the datashim Kubernetes Configmap based on camera status
 
     This updates the datashim on "ses" namespace as well to affect plugins running in
@@ -189,16 +177,16 @@ def update_datashim(cameras):
     api = kubernetes.client.CoreV1Api()
     configmap = get_configmap(api, "waggle-data-config")
     if configmap == None:
-        logging.warning("Not found waggle-data-config in default namespace")
+        logging.warning("not found waggle-data-config in default namespace")
         datashim = []
     else:
         datashim = json.loads(configmap.data["data-config.json"])
-    for _, camera in cameras.iterrows():
+    for camera in manifest_cameras:
         if camera.state != "registered":
-            logging.info(f"Dropping datashim for {camera.orientation}...")
+            logging.info(f"dropping datashim for {camera.name}...")
             datashim = drop_camera_from_datashim(datashim, camera)
             continue
-        logging.info(f"Updating datashim for {camera.orientation}...")
+        logging.info(f"updating datashim for {camera.name}...")
         datashim = update_datashim_for_camera(datashim, camera)
     set_datashim(api, datashim, "waggle-data-config")
     namespaces_to_apply = ["ses", "dev"]
@@ -208,49 +196,56 @@ def update_datashim(cameras):
             logging.info(f"applying datashim to {namespace.metadata.name}...")
             set_datashim(api, datashim, "waggle-data-config", namespace=namespace.metadata.name)
     logging.getLogger().setLevel(logger_level)
-    return cameras
+    return manifest_cameras
 
 
 def run():
-    logging.info(f'Get node manifest from {WAGGLE_MANIFEST_V2_PATH}')
+    logging.info(f'get node manifest from {WAGGLE_MANIFEST_V2_PATH}')
     if not os.path.exists(WAGGLE_MANIFEST_V2_PATH):
-        logging.error(f"No {WAGGLE_MANIFEST_V2_PATH} found. Exiting.")
+        logging.error(f"no {WAGGLE_MANIFEST_V2_PATH} found. Exiting.")
         return 1
     camera_matchers = utils.create_camera_object_matchers(TARGET_CAMERA_REGEX)
-    cameras = get_cameras_from_manifest(WAGGLE_MANIFEST_V2_PATH, camera_matchers)
-    if len(cameras) < 1:
+    manifest_cameras = get_cameras_from_manifest(WAGGLE_MANIFEST_V2_PATH, camera_matchers)
+    if len(manifest_cameras) < 1:
         logging.info(f'no matching camera found. no further action will be taken.')
         return 0
     else:
-        logging.info(f"{len(cameras)} found from manifest")
+        logging.info(f"found {len(manifest_cameras)} cameras from manifest")
 
     logging.info('fetching network switch credential.')
     if not all(get_networkswitch_credential()):
-        logging.error("Could not get network switch credential. Exiting...")
+        logging.error("could not get network switch credential. Exiting...")
         return 1
 
     logging.info('fetching camera user credential.')
     if not all(get_camera_credential()):
-        logging.error("Could not get camera credentials. Exiting...")
+        logging.error("could not get camera credentials. Exiting...")
         return 1
 
-    logging.info("Scanning cameras using nmap...")
+    logging.info("scanning cameras using nmap...")
     cameras_from_nmap = get_cameras_from_nmap()
-    logging.info("Sleep 3 seconds for the switch to update its network table")
+    logging.info("sleep 3 seconds for the switch to update its network table")
     time.sleep(3)
-    cameras_from_nmap = get_ports_from_switch(cameras_from_nmap)
-    logging.debug(f"Cameras found from the network: {cameras_from_nmap}")
+    node_cameras = get_ports_from_switch(cameras_from_nmap)
+    for _, camera in node_cameras.iterrows():
+        logging.info(f'camera found from the network: {camera.mac} at {camera.ip}')
 
     # logging.info('Scanning cameras using network switch...')
     # cameras_from_switch = get_cameras_from_switch()
     # logging.debug(f'Cameras found from networkswitch: {cameras_from_switch}')
 
-    logging.info("Updating recognized cameras...")
-    cameras_from_switch = update_camera_status(cameras_from_nmap)
-    logging.debug(f"Updated state of cameras: {cameras_from_switch}")
-    logging.debug(f"manifest: {cameras}")
-    cameras = update_manifest(cameras, cameras_from_switch)
-    cameras = update_datashim(cameras)
+    logging.info("updating or provision Hanwha cameras...")
+    node_cameras = update_hanwha_camera(manifest_cameras, node_cameras)
+    logging.debug(f"updated state of cameras: {node_cameras}")
+
+    # TODO(Yongho): this uses hardcoded names. We should use camera's serial_no to match between
+    # the manifest cameras and node cameras
+    manifest_cameras = temp_update_manifest_cameras(manifest_cameras, node_cameras)
+    for m_c in manifest_cameras:
+        if m_c.url != "" and m_c.state != "registered":
+            logging.info(f'we will register {m_c.name} as it has its url {m_c.url} already set')
+            m_c.new_state("registered")
+    cameras = update_datashim(manifest_cameras)
     return 0
 
 
