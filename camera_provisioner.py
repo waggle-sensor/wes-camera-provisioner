@@ -88,6 +88,8 @@ def get_cameras_from_manifest(manifest_path, camera_matchers:list) -> list:
             if camera_matcher.match(manifest_manufacturer, manifest_hw_model):
                 logging.info(f'found a match {sensor_name}')
                 c = utils.CameraObject(sensor_name, manifest_manufacturer, manifest_hw_model)
+                c.serial_no = m_sensor.get("serial_no", "")
+                c.url = m_sensor.get("url", "")
                 c.set_state("unknown")
                 found_cameras.append(c)
     return found_cameras
