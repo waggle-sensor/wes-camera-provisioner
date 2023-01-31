@@ -15,7 +15,7 @@ class TestFindingCameraFromManifest(unittest.TestCase):
         },
         {
             "description": "mobotix cameras",
-            "manufacturer": "mobitix",
+            "manufacturer": "mobotix",
             "hw_model": ["*"],
         },
         {
@@ -25,10 +25,9 @@ class TestFindingCameraFromManifest(unittest.TestCase):
         }
     ]
     def test_find_camera_from_manifest(self):
-        camera_objects = utils.create_camera_objects(self.TARGET_CAMERA_REGEX)
-        manifest = json.loads(self.test_manifest)
-        found_cameras = get_cameras_from_manifest(manifest, camera_objects)
-        print(found_cameras)
+        camera_matchers = utils.create_camera_object_matchers(self.TARGET_CAMERA_REGEX)
+        manifest_cameras = get_cameras_from_manifest("V002", camera_matchers)
+        print(manifest_cameras)
 
 if __name__ == '__main__':
     unittest.main()

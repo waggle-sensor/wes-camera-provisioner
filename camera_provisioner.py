@@ -26,7 +26,7 @@ TARGET_CAMERA_REGEX = os.getenv("TARGET_CAMERA_REGEX", [
     },
     {
         "description": "mobotix cameras",
-        "manufacturer": "mobitix",
+        "manufacturer": "mobotix",
         "hw_model": ["*"],
     },
     {
@@ -76,7 +76,7 @@ def get_cameras_from_manifest(manifest_path, camera_matchers:list) -> list:
         if sensor_name == "":
             logging.warn('found a sensor with no name. skipping.')
             continue
-        logging.info(f'found {sensor_name} from manifest')
+        logging.info(f'found sensor {sensor_name} from manifest')
         manifest_hardware = m_sensor.get("hardware", None)
         if manifest_hardware is None:
             logging.warn(f'no hardware information found from {sensor_name}. skipping.')
@@ -92,6 +92,7 @@ def get_cameras_from_manifest(manifest_path, camera_matchers:list) -> list:
                 c.url = m_sensor.get("url", "")
                 c.set_state("unknown")
                 found_cameras.append(c)
+                break
     return found_cameras
 
 
