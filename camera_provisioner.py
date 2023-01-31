@@ -89,7 +89,7 @@ def get_cameras_from_manifest(manifest_path, camera_matchers:list) -> list:
                 logging.info(f'found a match {sensor_name}')
                 c = utils.CameraObject(sensor_name, manifest_manufacturer, manifest_hw_model)
                 c.serial_no = m_sensor.get("serial_no", "")
-                c.url = m_sensor.get("url", "")
+                c.url = m_sensor.get("uri", "")
                 c.set_state("unknown")
                 found_cameras.append(c)
                 break
@@ -170,7 +170,7 @@ def update_datashim(manifest_cameras:list):
 
     Keyword Arguments:
     --------
-    `cameras` -- a pandas Dataframe with cameras configured/notconfigured
+    `manifest_cameras` -- a list of utils.CameraObject that are configured
     """
     # NOTE: Debug messages from Kubernetes client may contain sensitive information
     #       and thus disable debugging flag
@@ -247,7 +247,7 @@ def run():
     for m_c in manifest_cameras:
         if m_c.url != "" and m_c.state != "registered":
             logging.info(f'we will register {m_c.name} as it has its url {m_c.url} already set')
-            m_c.new_state("registered")
+            m_c.set_state("registered")
     cameras = update_datashim(manifest_cameras)
     return 0
 
