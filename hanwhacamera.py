@@ -149,22 +149,24 @@ def initialize_camera(camera):
     return configure_camera(ip_address=camera.ip, orientation=camera.orientation)
 
 
-def update_camera_status(cameras):
-    """Updates status of cameras
+def update_hanwha_camera(manifest_cameras, node_cameras):
+    """Update or provision Hanwha cameras
 
     Keyword Arguments:
     --------
-    `cameras` -- a pandas DataFrame containing list of cameras to be updated
+    `manifest_cameras` -- a list of camera objects constructed from node's manifest
+
+    `node_cameras` -- a list of camera objects in pandas.DataFrame currently recognized from node
 
     Returns:
     --------
-    `cameras` -- a pandas DataFrame with updated cameras
+    `manifest_cameras` -- a list of updated cameras with node cameras
     """
     admin, admin_password, _, _ = get_camera_credential()
-    for _, camera in cameras.iterrows():
-        logging.info(f"Updating status of camera {camera.ip} ({camera.mac})")
+    for _, camera in node_cameras.iterrows():
+        logging.info(f"attempting to get status of camera {camera.ip} ({camera.mac})")
         if initialize_camera(camera) == False:
-            logging.error(f"{camera.ip}: Failed to initialize the camera. Skipping...")
+            logging.error(f"{camera.ip}: Failed to initialize the camera. Maybe it is not a Hanwha camera. Skipping...")
             continue
         with HanwhaCameraClient(
             host=f"http://{camera.ip}", user=admin, password=admin_password
@@ -179,7 +181,7 @@ def update_camera_status(cameras):
             camera_model = device_info["Model"]
             camera_mac = device_info["ConnectedMACAddress"].lower()
             if camera.ip != camera_ip:
-                logging.warning(f"{camera_ip} does not match with {camera.ip}")
+                logging.warning(f"{camera_ip} does not match with {camera.ip}. sync the information with the camera")
                 ret = client.update_device_information(camera.ip, camera_orientation)
                 if ret == False:
                     logging.warning(
@@ -194,4 +196,4 @@ def update_camera_status(cameras):
             camera.mac = camera_mac
             camera.stream = stream
             camera.state = "configured"
-    return cameras
+    return node_cameras

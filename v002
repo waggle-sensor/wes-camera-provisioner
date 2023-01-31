@@ -1,0 +1,260 @@
+{
+    "vsn": "W023",
+    "name": "000048B02D15BC7C",
+    "gps_lat": 41.717805,
+    "gps_lon": -87.978575,
+    "tags": [],
+    "computes": [
+        {
+            "name": "nxcore",
+            "serial_no": "48B02D15BC7C",
+            "zone": "core",
+            "hardware": {
+                "hardware": "xaviernx",
+                "hw_model": "xavierNX",
+                "hw_version": "NGX003",
+                "sw_version": "",
+                "manufacturer": "ConnectTech",
+                "datasheet": "https://www.nvidia.com/en-us/autonomous-machines/embedded-systems/jetson-xavier-nx/",
+                "capabilities": [
+                    "gpu",
+                    "cuda102",
+                    "arm64"
+                ],
+                "cpu": "6000",
+                "cpu_ram": "8092",
+                "gpu_ram": "8092",
+                "shared_ram": true
+            }
+        },
+        {
+            "name": "rpi",
+            "serial_no": "DCA632A3058B",
+            "zone": "shield",
+            "hardware": {
+                "hardware": "rpi-4gb",
+                "hw_model": "RPI4B",
+                "hw_version": "rpi4b-4g",
+                "sw_version": "",
+                "manufacturer": "Raspberry Pi",
+                "datasheet": "https://www.raspberrypi.com/products/raspberry-pi-4-model-b/",
+                "capabilities": [
+                    "arm64",
+                    "poe"
+                ],
+                "cpu": "4000",
+                "cpu_ram": "4096",
+                "gpu_ram": "",
+                "shared_ram": true
+            }
+        }
+    ],
+    "sensors": [
+        {
+            "name": "top_camera",
+            "scope": "global",
+            "labels": [],
+            "serial_no": "",
+            "uri": "",
+            "hardware": {
+                "hardware": "fe-8010",
+                "hw_model": "XNF-8010RV",
+                "hw_version": "",
+                "sw_version": "",
+                "manufacturer": "Hanwha Techwin",
+                "datasheet": "https://www.hanwhasecurity.com/product/xnf-8010rv/",
+                "capabilities": []
+            }
+        },
+        {
+            "name": "bottom_camera",
+            "scope": "global",
+            "labels": [],
+            "serial_no": "",
+            "uri": "",
+            "hardware": {
+                "hardware": "ptz-8081",
+                "hw_model": "XNV-8081Z",
+                "hw_version": "",
+                "sw_version": "",
+                "manufacturer": "Hanwha Techwin",
+                "datasheet": "https://www.hanwhasecurity.com/product/xnv-8081z/",
+                "capabilities": []
+            }
+        },
+        {
+            "name": "left_camera",
+            "scope": "global",
+            "labels": [],
+            "serial_no": "",
+            "uri": "",
+            "hardware": {
+                "hardware": "ptz-8081",
+                "hw_model": "XNV-8081Z",
+                "hw_version": "",
+                "sw_version": "",
+                "manufacturer": "Hanwha Techwin",
+                "datasheet": "https://www.hanwhasecurity.com/product/xnv-8081z/",
+                "capabilities": []
+            }
+        },
+        {
+            "name": "fake-mobotix",
+            "scope": "global",
+            "labels": [],
+            "serial_no": "",
+            "uri": "10.31.81.19",
+            "hardware": {
+                "hardware": "mobotix-m16",
+                "hw_model": "MOBOTIX MX-M16TB-R079IP",
+                "hw_version": "",
+                "sw_version": "",
+                "manufacturer": "Mobotix",
+                "datasheet": "https://www.mobotix.com/en/products/thermographic-cameras/m16-thermal-tr",
+                "capabilities": []
+            }
+        },
+        {
+            "name": "bme280",
+            "scope": "nxcore",
+            "labels": [],
+            "serial_no": "",
+            "uri": "",
+            "hardware": {
+                "hardware": "bme280",
+                "hw_model": "BME280",
+                "hw_version": "",
+                "sw_version": "",
+                "manufacturer": "Bosch",
+                "datasheet": "https://www.bosch-sensortec.com/products/environmental-sensors/humidity-sensors-bme280/",
+                "capabilities": []
+            }
+        },
+        {
+            "name": "gps",
+            "scope": "nxcore",
+            "labels": [],
+            "serial_no": "",
+            "uri": "",
+            "hardware": {
+                "hardware": "gps",
+                "hw_model": "VK-162",
+                "hw_version": "",
+                "sw_version": "",
+                "manufacturer": "Geekstory",
+                "datasheet": "",
+                "capabilities": []
+            }
+        },
+        {
+            "name": "bme680",
+            "scope": "rpi",
+            "labels": [],
+            "serial_no": "",
+            "uri": "",
+            "hardware": {
+                "hardware": "bme680",
+                "hw_model": "BME680",
+                "hw_version": "",
+                "sw_version": "",
+                "manufacturer": "Bosch",
+                "datasheet": "https://www.bosch-sensortec.com/products/environmental-sensors/gas-sensors/bme680/",
+                "capabilities": []
+            }
+        },
+        {
+            "name": "microphone",
+            "scope": "rpi",
+            "labels": [],
+            "serial_no": "",
+            "uri": "",
+            "hardware": {
+                "hardware": "microphone",
+                "hw_model": "ML1-WS IP54",
+                "hw_version": "",
+                "sw_version": "",
+                "manufacturer": "ETS",
+                "datasheet": "",
+                "capabilities": []
+            }
+        },
+        {
+            "name": "raingauge",
+            "scope": "rpi",
+            "labels": [],
+            "serial_no": "",
+            "uri": "",
+            "hardware": {
+                "hardware": "raingauge",
+                "hw_model": "RG-15",
+                "hw_version": "",
+                "sw_version": "",
+                "manufacturer": "Hydreon",
+                "datasheet": "https://rainsensors.com/products/rg-15/",
+                "capabilities": []
+            }
+        }
+    ],
+    "resources": [
+        {
+            "name": "usbhub",
+            "hardware": {
+                "hardware": "usbhub-10port",
+                "hw_model": "HB30A10AME",
+                "hw_version": "",
+                "sw_version": "",
+                "manufacturer": "StarTech.com",
+                "datasheet": "https://www.startech.com/en-us/cards-adapters/hb30a10ame",
+                "capabilities": []
+            }
+        },
+        {
+            "name": "switch",
+            "hardware": {
+                "hardware": "switch",
+                "hw_model": "ES-8-150W",
+                "hw_version": "",
+                "sw_version": "",
+                "manufacturer": "UniFi",
+                "datasheet": "https://store.ui.com/collections/operator-edgemax-switches/products/edgeswitch-8-150w",
+                "capabilities": []
+            }
+        },
+        {
+            "name": "wagman",
+            "hardware": {
+                "hardware": "wagman",
+                "hw_model": "wagmanv5",
+                "hw_version": "v5.0",
+                "sw_version": "",
+                "manufacturer": "Surya",
+                "datasheet": "",
+                "capabilities": []
+            }
+        },
+        {
+            "name": "psu",
+            "hardware": {
+                "hardware": "psu-b0bd",
+                "hw_model": "Efore RCB600",
+                "hw_version": "B0BD",
+                "sw_version": "",
+                "manufacturer": "Enedo",
+                "datasheet": "https://www.trcelectronics.com/efore-roal-modular-power-supply-rcb600",
+                "capabilities": []
+            }
+        },
+        {
+            "name": "wifi",
+            "hardware": {
+                "hardware": "wifi",
+                "hw_model": "AC650",
+                "hw_version": "V2",
+                "sw_version": "",
+                "manufacturer": "BrosTrend",
+                "datasheet": "",
+                "capabilities": []
+            }
+        }
+    ]
+}
