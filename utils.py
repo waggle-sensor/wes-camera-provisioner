@@ -52,7 +52,7 @@ def load_node_manifest(node_manifest_path):
         return json.load(file)
 
 
-def does_networkswitch_exist(node_manifest_path):
+def does_networkswitch_exist(node_manifest_path) -> bool:
     manifest = load_node_manifest(node_manifest_path)
     resources = manifest.get("resources", None)
     if resources is None:
@@ -122,9 +122,9 @@ class ObjectMatcher(object):
 
 def create_object_matchers(matchers:dict):
     objects = []
-    for m in matchers:
-        d = m.get("description", "")
-        m = m.get("manufacturer", "")
-        hw = m.get("hw_model", "")
+    for i in matchers:
+        d = i.get("description", "")
+        m = i.get("manufacturer", "")
+        hw = i.get("hw_model", "")
         objects.append(ObjectMatcher(d, m, hw))
     return objects
