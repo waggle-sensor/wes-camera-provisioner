@@ -207,7 +207,7 @@ def run():
     if not os.path.exists(WAGGLE_MANIFEST_V2_PATH):
         logging.error(f"no {WAGGLE_MANIFEST_V2_PATH} found. Exiting.")
         return 1
-    camera_matchers = utils.create_camera_object_matchers(TARGET_CAMERA_REGEX)
+    camera_matchers = utils.create_object_matchers(TARGET_CAMERA_REGEX)
     manifest_cameras = get_cameras_from_manifest(WAGGLE_MANIFEST_V2_PATH, camera_matchers)
     if len(manifest_cameras) < 1:
         logging.info(f'no matching camera found. no further action will be taken.')
@@ -229,9 +229,13 @@ def run():
     cameras_from_nmap = get_cameras_from_nmap()
     logging.info("sleep 3 seconds for the switch to update its network table")
     time.sleep(3)
-    node_cameras = get_ports_from_switch(cameras_from_nmap)
-    for _, camera in node_cameras.iterrows():
-        logging.info(f'camera found from the network: {camera.mac} at {camera.ip}')
+    if utils.does_networkswitch_exist(WAGGLE_MANIFEST_V2_PATH):
+        node_cameras = get_ports_from_switch(cameras_from_nmap)
+        for _, camera in node_cameras.iterrows():
+            logging.info(f'camera found from the network: {camera.mac} at {camera.ip}')
+    else:
+        node_cameras = cameras_from_nmap
+        logging.info('network switch does not exist in manifest. skip getting information on switch port for cameras')
 
     # logging.info('Scanning cameras using network switch...')
     # cameras_from_switch = get_cameras_from_switch()

@@ -25,9 +25,12 @@ class TestFindingCameraFromManifest(unittest.TestCase):
         }
     ]
     def test_find_camera_from_manifest(self):
-        camera_matchers = utils.create_camera_object_matchers(self.TARGET_CAMERA_REGEX)
+        camera_matchers = utils.create_object_matchers(self.TARGET_CAMERA_REGEX)
         manifest_cameras = get_cameras_from_manifest("V002", camera_matchers)
         print(manifest_cameras)
+
+    def test_skip_networkswitch_if_not_exist(self):
+        self.assertTrue(utils.does_networkswitch_exist("V002"))
 
 if __name__ == '__main__':
     unittest.main()

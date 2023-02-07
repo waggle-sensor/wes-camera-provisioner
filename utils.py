@@ -52,6 +52,24 @@ def load_node_manifest(node_manifest_path):
         return json.load(file)
 
 
+def does_networkswitch_exist(node_manifest_path) -> bool:
+    manifest = load_node_manifest(node_manifest_path)
+    resources = manifest.get("resources", None)
+    if resources is None:
+        return False
+    switch_matcher = ObjectMatcher("unifi switch", "UniFi", "ES-8-150W")
+    for r in resources:
+        h = r.get("hardware", None)
+        if h is None:
+            return False
+        # get manufacturer and hardware model of camera from the manifest
+        manufacturer = h.get("manufacturer", "")
+        hw_model = h.get("hw_model", "")
+        if switch_matcher.match(manufacturer, hw_model):
+            return True
+    return False
+
+
 class CameraObject(object):
     def __init__(self, name, manufacturer, hw_model):
         self.name = name
@@ -66,7 +84,7 @@ class CameraObject(object):
         self.state = new_state
 
 
-class CameraObjectMatcher(object):
+class ObjectMatcher(object):
     def __init__(self, description="", manufacturer="", hw_model=[]):
         self.description = description
         self.manufacturer = manufacturer
@@ -102,11 +120,11 @@ class CameraObjectMatcher(object):
         return all(matched)
 
 
-def create_camera_object_matchers(camera_matchers:dict):
+def create_object_matchers(matchers:dict):
     objects = []
-    for camera_matcher in camera_matchers:
-        d = camera_matcher.get("description", "")
-        m = camera_matcher.get("manufacturer", "")
-        hw = camera_matcher.get("hw_model", "")
-        objects.append(CameraObjectMatcher(d, m, hw))
+    for i in matchers:
+        d = i.get("description", "")
+        m = i.get("manufacturer", "")
+        hw = i.get("hw_model", "")
+        objects.append(ObjectMatcher(d, m, hw))
     return objects

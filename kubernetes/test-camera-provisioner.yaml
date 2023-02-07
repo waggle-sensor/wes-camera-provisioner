@@ -11,9 +11,10 @@ spec:
   hostNetwork: true
   containers:
     - name: wes-camera-provisioner
+      imagePullPolicy: Always
       command: ["/bin/bash", "-c"]
       args: ["while true; do sleep 1; done"]
-      image: waggle/wes-camera-provisioner:0.1.1
+      image: waggle/wes-camera-provisioner:pr-6
       resources:
         requests:
           cpu: 200m
@@ -72,7 +73,7 @@ spec:
         defaultMode: 0600
     - name: waggle-node-manifest-v2
       configMap:
-        name: waggle-node-manifest-v2
+        name: waggle-node-manifest-v2-9d5gtg6729
     - name: hanwha-client-ssh-config
       configMap:
         name: wes-camera-provisioner-ssh
