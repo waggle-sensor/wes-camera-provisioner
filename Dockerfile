@@ -8,7 +8,9 @@ RUN apt-get update \
   arp-scan \
   && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt camera_provisioner.py hanwhacamera.py networkswitch.py utils.py run.sh /app/
+COPY requirements.txt /app/
 RUN pip3 install --no-cache-dir -r /app/requirements.txt
+
+COPY camera_provisioner.py hanwhacamera.py networkswitch.py utils.py run.sh /app/
 
 ENTRYPOINT ["/bin/bash", "/app/run.sh"]

@@ -3,6 +3,8 @@ import logging
 import os
 import time
 
+import pandas as pd
+
 from hanwha_camera_client import HanwhaCameraClient
 
 
@@ -149,21 +151,19 @@ def initialize_camera(camera):
     return configure_camera(ip_address=camera.ip, orientation=camera.orientation)
 
 
-def update_hanwha_camera(manifest_cameras, node_cameras):
+def update_hanwha_camera(node_cameras):
     """Update or provision Hanwha cameras
 
     Keyword Arguments:
     --------
-    `manifest_cameras` -- a list of camera objects constructed from node's manifest
-
     `node_cameras` -- a list of camera objects in pandas.DataFrame currently recognized from node
 
     Returns:
     --------
-    `manifest_cameras` -- a list of updated cameras with node cameras
+    `node_cameras` -- an updated node_cameras
     """
     admin, admin_password, _, _ = get_camera_credential()
-    for _, camera in node_cameras.iterrows():
+    for ip, camera in node_cameras.iterrows():
         logging.info(f"attempting to get status of camera {camera.ip} ({camera.mac})")
         if initialize_camera(camera) == False:
             logging.error(f"{camera.ip}: Failed to initialize the camera. Maybe it is not a Hanwha camera. Skipping...")
@@ -191,9 +191,9 @@ def update_hanwha_camera(manifest_cameras, node_cameras):
             if ret == False:
                 logging.error(f"{camera.ip}: Failed to get RTSP stream URI. Skipping...")
                 continue
-            camera.orientation = camera_orientation
-            camera.model = camera_model
-            camera.mac = camera_mac
-            camera.stream = stream
-            camera.state = "configured"
+            node_cameras.at[ip, "orientation"] = camera_orientation
+            node_cameras.at[ip, "model"] = camera_model
+            node_cameras.at[ip, "mac"] = camera_mac
+            node_cameras.at[ip, "stream"] = stream
+            node_cameras.at[ip, "state"] = "configured"
     return node_cameras
