@@ -120,6 +120,10 @@ def temp_update_manifest_cameras(manifest_cameras, node_cameras):
     for _, camera in node_cameras.iterrows():
         # get the camera that matches with the orientation and is configured
         orientation = camera["orientation"]
+        logging.info(f'checking {camera["ip"]} if it exists in manifest')
+        if camera["state"] != "configured":
+            logging.info(f'skipping {camera["ip"]} because of the wrong state "{camera["state"]}", expected "configured"')
+            continue
         for m_camera in manifest_cameras:
             if orientation in m_camera.name:
                 logging.info(f"the camera for {orientation} found. datashim will be updated")
@@ -236,14 +240,18 @@ def run():
     else:
         node_cameras = cameras_from_nmap
         logging.info('network switch does not exist in manifest. skip getting information on switch port for cameras')
-
+    logging.debug("updated state of cameras:")
+    for _, c in node_cameras.iterrows():
+        logging.debug(c)
     # logging.info('Scanning cameras using network switch...')
     # cameras_from_switch = get_cameras_from_switch()
     # logging.debug(f'Cameras found from networkswitch: {cameras_from_switch}')
 
-    logging.info("updating or provision Hanwha cameras...")
-    node_cameras = update_hanwha_camera(manifest_cameras, node_cameras)
-    logging.debug(f"updated state of cameras: {node_cameras}")
+    logging.info("updating or provisioning Hanwha cameras...")
+    node_cameras = update_hanwha_camera(node_cameras)
+    logging.debug("updated state of cameras:")
+    for _, c in node_cameras.iterrows():
+        logging.debug(c)
 
     # TODO(Yongho): this uses hardcoded names. We should use camera's serial_no to match between
     # the manifest cameras and node cameras

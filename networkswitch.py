@@ -2,6 +2,7 @@ import logging
 import os
 import re
 import subprocess
+import pandas as pd
 
 from unifi_switch_client import UnifiSwitchClient
 
@@ -135,7 +136,7 @@ def get_cameras_from_nmap():
         if found:
             if found_ip is not None:
                 data = {"ip": found_ip["ip"], "mac": found_ip["mac"].lower()}
-                cameras = cameras.append(create_row(data, name="unknown"))
+                cameras = pd.concat([cameras, create_row(data, name=found_ip["ip"]).to_frame().T])
             found_ip = {"ip": found.string[found.start() : found.end()]}
             continue
         found = re.search("(?:[0-9a-zA-Z]:?){12}", line)
@@ -144,5 +145,5 @@ def get_cameras_from_nmap():
                 found_ip.update({"mac": found.string[found.start() : found.end()]})
     if found_ip is not None:
         data = {"ip": found_ip["ip"], "mac": found_ip["mac"].lower()}
-        cameras = cameras.append(create_row(data, name="unknown"))
+        cameras = pd.concat([cameras, create_row(data, name=found_ip["ip"]).to_frame().T])
     return cameras
