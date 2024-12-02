@@ -234,12 +234,18 @@ def run():
     logging.info("sleep 3 seconds for the switch to update its network table")
     time.sleep(3)
     if utils.does_networkswitch_exist(WAGGLE_MANIFEST_V2_PATH):
-        node_cameras = get_ports_from_switch(cameras_from_nmap)
-        for _, camera in node_cameras.iterrows():
-            logging.info(f'camera found from the network: {camera.mac} at {camera.ip}')
-    else:
-        node_cameras = cameras_from_nmap
-        logging.info('network switch does not exist in manifest. skip getting information on switch port for cameras')
+        try:
+            # PL 01.02.2024 
+            # Added logic to first try getting ports from the switch via config specified IP
+            # and if it fails, fallback on the cameras_from_nmap
+            node_cameras = get_ports_from_switch(cameras_from_nmap)
+            for _, camera in node_cameras.iterrows():
+                logging.info(f'camera found from the network: {camera.mac} at {camera.ip}')
+        except Exception as e:
+            logging.error(f'{str(e)}')
+            node_cameras = cameras_from_nmap
+            logging.info('Getting network switch from manifest failed, trying cameras_from_nmap')
+            logging.info('network switch does not exist in manifest. skip getting information on switch port for cameras')
     logging.debug("updated state of cameras:")
     for _, c in node_cameras.iterrows():
         logging.debug(c)
