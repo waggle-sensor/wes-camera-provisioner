@@ -246,6 +246,9 @@ def run():
             node_cameras = cameras_from_nmap
             logging.info('Getting network switch from manifest failed, trying cameras_from_nmap')
             logging.info('network switch does not exist in manifest. skip getting information on switch port for cameras')
+    else:
+        node_cameras = cameras_from_nmap
+        logging.info('network switch does not exist in manifest. skip getting information on switch port for cameras')
     logging.debug("updated state of cameras:")
     for _, c in node_cameras.iterrows():
         logging.debug(c)
