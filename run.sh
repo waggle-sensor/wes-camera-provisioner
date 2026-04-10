@@ -15,6 +15,8 @@ fi
 
 # Build and install the package
 python3 setup.py bdist_wheel
+# We pick the latest wheel in case there are multiple wheels in the directory
+# An error will occur if multiple versions of the library are installed.
 pip3 install $(find dist -maxdepth 1 -name '*.whl' -print0 | sort -zV | tail -z -n 1)
 
 # Start the application
