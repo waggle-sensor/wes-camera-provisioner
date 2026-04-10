@@ -15,7 +15,7 @@ fi
 
 # Build and install the package
 python3 setup.py bdist_wheel
-pip3 install dist/*.whl
+pip3 install $(find dist -maxdepth 1 -name '*.whl' -print0 | sort -zV | tail -z -n 1)
 
 # Start the application
 cd /app
